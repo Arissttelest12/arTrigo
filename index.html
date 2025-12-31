@@ -2,11 +2,22 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🔍</text></svg>" />
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <script>
       const showInfo = () => {
+        // Check camera permission first
+        if (navigator.permissions && navigator.permissions.query) {
+          navigator.permissions.query({name: 'camera'}).then(result => {
+            console.log('Camera permission status:', result.state);
+            if (result.state === 'denied') {
+              console.warn('Camera permission denied - please enable in browser settings');
+            }
+          });
+        }
+        
         let y = 0;
         const profileButton = document.querySelector("#profile-button");
         const webButton = document.querySelector("#web-button");
@@ -281,14 +292,20 @@
         }
 
         // Close modal on close button click
-        document.querySelector('#fullscreen-modal .close-btn').addEventListener('click', closeFullscreenModal);
+        const closeBtn = document.querySelector('#fullscreen-modal .close-btn');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', closeFullscreenModal);
+        }
 
         // Close modal on outside click
-        document.querySelector('#fullscreen-modal').addEventListener('click', (evt) => {
-          if (evt.target.id === 'fullscreen-modal') {
-            closeFullscreenModal();
-          }
-        });
+        const modal = document.querySelector('#fullscreen-modal');
+        if (modal) {
+          modal.addEventListener('click', (evt) => {
+            if (evt.target.id === 'fullscreen-modal') {
+              closeFullscreenModal();
+            }
+          });
+        }
 
         // Close modal on Escape key
         document.addEventListener('keydown', (evt) => {
