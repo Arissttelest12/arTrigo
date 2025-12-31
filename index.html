@@ -161,15 +161,44 @@
         let paused = false;
         let frozenHolder = null;
         let sceneReady = false;
+        let cameraTimeout = null;
 
         function removeIdsRecursively(el) {
           if (!el || !el.querySelectorAll) return;
           el.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
         }
 
+        // Debug: Check camera access with timeout
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          navigator.mediaDevices.enumerateDevices().then(devices => {
+            const cameras = devices.filter(device => device.kind === 'videoinput');
+            console.log('Available cameras:', cameras.length);
+            if (cameras.length === 0) {
+              console.warn('⚠️ No camera devices found! Check if camera is connected and not in use.');
+            }
+          }).catch(err => {
+            console.error('Error checking devices:', err);
+          });
+        }
+
+        // Set camera timeout - if camera doesn't start in 15 seconds, show message
+        cameraTimeout = setTimeout(() => {
+          const timeoutMsg = document.getElementById('loading-timeout-msg');
+          if (timeoutMsg && !sceneReady) {
+            timeoutMsg.style.display = 'block';
+            console.warn('⚠️ Camera access timeout - try allowing permissions or refreshing');
+          }
+        }, 15000);
+
         // Wait for scene to be fully loaded
         scene.addEventListener('loaded', () => {
           sceneReady = true;
+          if (cameraTimeout) {
+            clearTimeout(cameraTimeout);
+            const timeoutMsg = document.getElementById('loading-timeout-msg');
+            if (timeoutMsg) timeoutMsg.style.display = 'none';
+          }
+          console.log('✓ Scene ready');
         });
 
         pauseBtn.addEventListener('click', () => {
@@ -445,6 +474,11 @@
 	<div class="inner">
 	  <img src="./assets/card-example/card.png"/>
 	  <div class="scanline"></div>
+	  <div id="loading-timeout-msg" style="color: white; font-size: 14px; margin-top: 20px; text-align: center; display: none;">
+	    <p>⚠️ Camera loading timeout</p>
+	    <p style="font-size: 12px;">Try: Allow camera in Chrome permissions</p>
+	    <p style="font-size: 12px;">or refresh page (Ctrl+Shift+R)</p>
+	  </div>
 	</div>
       </div>
 
